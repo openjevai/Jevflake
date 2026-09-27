@@ -10,12 +10,13 @@ from requests.adapters import HTTPAdapter
 import _snowflake
 from _snowflake import vectorized
 MODEL = ${jsonencode(model)}
+URL = ${jsonencode(url)}
 ROWS_PER_REQUEST = ${rows_per_request}
 CONCURRENCY = ${concurrency}
 MAX_BATCH_SIZE = ${max_batch_size}
 MAX_RETRIES = ${max_retries}
 TIMEOUT_SECONDS = ${timeout_seconds}
-URL = "https://api.typesafe.ai/v1/systemone"
+URL = ${jsonencode(url)}
 BACKOFF_CAP_SECONDS = 20
 RETRYABLE = (408, 429, 500, 502, 503, 504, 529)
 REJECTED = (400, 413, 422)

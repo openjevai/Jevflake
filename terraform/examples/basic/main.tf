@@ -47,6 +47,13 @@ variable "caller_roles" {
   default = []
 }
 
+# Set to "openjev" to use the OpenJEV community gateway instead of TypeSafe direct.
+# When openjev, use openjev_api_key / openjev_existing_secret instead of the TypeSafe variables below.
+variable "provider" {
+  type    = string
+  default = "typesafe"
+}
+
 module "jevflake" {
   source = "../../"
 
@@ -56,6 +63,7 @@ module "jevflake" {
   api_key          = var.typesafe_api_key
   existing_secret  = var.existing_secret
   caller_roles     = var.caller_roles
+  provider         = var.provider
 }
 
 output "functions" {

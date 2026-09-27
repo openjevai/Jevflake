@@ -15,7 +15,7 @@ Only the latest release and the `main` branch are supported.
 Jevflake runs inside your Snowflake account, holds an API key, and sends row content to an outside API. These are the kinds of problems worth a private report:
 
 - the TypeSafe API key ending up somewhere it should not, such as dbt logs, query text, or Terraform state when `existing_secret` is used
-- the network rule or integration allowing traffic to anywhere other than `api.typesafe.ai`
+- the network rule or integration allowing traffic to anywhere other than `api.typesafe.ai` (or `api.openjev.sh` when `provider` is set to `openjev`)
 - grants that are wider than the README says
 - row content making the function do anything other than return an answer
 

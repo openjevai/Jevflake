@@ -125,7 +125,7 @@
     'create network rule if not exists ' ~ jevflake.network_rule_name() ~ '\n'
     ~ "  mode = egress\n"
     ~ "  type = host_port\n"
-    ~ "  value_list = ('api.typesafe.ai:443')"
+    ~ "  value_list = ('" ~ jevflake.egress_host() ~ "')"
   ) %}
   {% do statements.append(
     'create or replace external access integration ' ~ jevflake.integration_name() ~ '\n'

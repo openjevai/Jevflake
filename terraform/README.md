@@ -72,12 +72,19 @@ You have two choices. Set exactly one.
 - `integration_name`: default `JEV_ACCESS`. Integrations are account level, so the name must be unique in the account.
 - `caller_roles`: roles that may call the functions. Default `[]`. The roles must already exist, and each also needs usage on the database and on a warehouse, which this module does not grant.
 - `model`: default `jev-1.13.0`.
+- `provider`: default `typesafe`. Set `openjev` to route calls through the OpenJEV community gateway instead of TypeSafe direct. When `openjev`, set `openjev_api_key` or `openjev_existing_secret` instead of `api_key` / `existing_secret`.
 - `rows_per_request`: default `1`. Values above 1 are experimental. See the main README.
 - `concurrency`: default `8`.
 - `max_batch_size`: default `64`.
 - `max_retries`: default `6`.
 - `timeout_seconds`: default `30`.
 - `python_version`: default `3.11`.
+
+When `provider` is `openjev`, use these instead of `api_key` / `existing_secret` / `secret_name`:
+
+- `openjev_api_key`: OpenJEV API key, if Terraform should create the secret. Default `null`. The key is written to Terraform state; prefer `openjev_existing_secret`.
+- `openjev_existing_secret`: full name of an existing secret that holds the OpenJEV API key. Default `null`.
+- `openjev_secret_name`: name of the secret Terraform creates. Default `JEV_OPENJEV_API_KEY`.
 
 All names are turned into upper case. The dbt macros use unquoted names, which Snowflake reads as upper case, so this keeps the two in step.
 

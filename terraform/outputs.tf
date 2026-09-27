@@ -20,7 +20,7 @@ output "network_rule" {
 
 output "secret" {
   description = "Full name of the secret the functions read the API key from."
-  value       = local.secret_id
+  value       = local.effective_secret_id
 }
 
 output "functions" {
@@ -42,5 +42,5 @@ output "function_signatures" {
 
 output "model" {
   description = "Jev model ID the functions send. Keep the dbt var jevflake_model set to the same value."
-  value       = var.model
+  value       = local.api_model
 }

@@ -7,6 +7,17 @@ locals {
   existing_secret_id = var.existing_secret == null ? null : join(".", [for part in split(".", upper(var.existing_secret)) : "\"${part}\""])
   secret_id          = coalesce(local.existing_secret_id, one(snowflake_secret_with_generic_string.api_key[*].fully_qualified_name), "missing")
 
+  is_openjev = var.provider == "openjev"
+
+  openjev_existing_secret_id = var.openjev_existing_secret == null ? null : join(".", [for part in split(".", upper(var.openjev_existing_secret)) : "\"${part}\""])
+  openjev_secret_id          = coalesce(local.openjev_existing_secret_id, one(snowflake_secret_with_generic_string.openjev_api_key[*].fully_qualified_name), "missing")
+
+  effective_secret_id = local.is_openjev ? local.openjev_secret_id : local.secret_id
+
+  api_url   = local.is_openjev ? "https://api.openjev.sh/v1/systemone" : "https://api.typesafe.ai/v1/systemone"
+  api_model = local.is_openjev ? "openjev" : var.model
+  egress_host = local.is_openjev ? "api.openjev.sh:443" : "api.typesafe.ai:443"
+
   state_forms = {
     variant = { type = "VARIANT", expression = "STATE" }
     varchar = { type = "VARCHAR", expression = "TO_VARIANT(STATE)" }
@@ -57,7 +68,7 @@ resource "snowflake_schema" "this" {
   count    = var.create_schema ? 1 : 0
   database = local.database
   name     = upper(var.schema)
-  comment  = "Jevflake: functions that call the TypeSafe Jev API"
+  comment  = local.is_openjev ? "Jevflake: functions that call the OpenJEV Jev API" : "Jevflake: functions that call the TypeSafe Jev API"
 }
 
 resource "snowflake_network_rule" "egress" {
@@ -66,12 +77,12 @@ resource "snowflake_network_rule" "egress" {
   name       = upper(var.network_rule_name)
   type       = "HOST_PORT"
   mode       = "EGRESS"
-  value_list = ["api.typesafe.ai:443"]
-  comment    = "Jevflake: outbound access to the TypeSafe Jev API"
+  value_list = [local.egress_host]
+  comment    = local.is_openjev ? "Jevflake: outbound access to the OpenJEV Jev API" : "Jevflake: outbound access to the TypeSafe Jev API"
 }
 
 resource "snowflake_secret_with_generic_string" "api_key" {
-  count         = nonsensitive(var.api_key != null) ? 1 : 0
+  count         = !local.is_openjev && nonsensitive(var.api_key != null) ? 1 : 0
   database      = local.database
   schema        = local.schema
   name          = upper(var.secret_name)
@@ -79,20 +90,29 @@ resource "snowflake_secret_with_generic_string" "api_key" {
   comment       = "Jevflake: TypeSafe API key"
 }
 
+resource "snowflake_secret_with_generic_string" "openjev_api_key" {
+  count         = local.is_openjev && nonsensitive(var.openjev_api_key != null) ? 1 : 0
+  database      = local.database
+  schema        = local.schema
+  name          = upper(var.openjev_secret_name)
+  secret_string = var.openjev_api_key
+  comment       = "Jevflake: OpenJEV API key"
+}
+
 resource "snowflake_external_access_integration" "jev" {
   name                  = upper(var.integration_name)
   enabled               = true
   allowed_network_rules = [snowflake_network_rule.egress.fully_qualified_name]
-  comment               = "Jevflake: lets the Jev functions reach api.typesafe.ai"
+  comment               = local.is_openjev ? "Jevflake: lets the Jev functions reach api.openjev.sh" : "Jevflake: lets the Jev functions reach api.typesafe.ai"
 
   allowed_authentication_secrets {
-    secrets = [local.secret_id]
+    secrets = [local.effective_secret_id]
   }
 
   lifecycle {
     precondition {
-      condition     = (var.existing_secret == null) != nonsensitive(var.api_key == null)
-      error_message = "Set exactly one of api_key or existing_secret."
+      condition     = local.is_openjev ? (var.openjev_existing_secret == null) != nonsensitive(var.openjev_api_key == null) : (var.existing_secret == null) != nonsensitive(var.api_key == null)
+      error_message = local.is_openjev ? "Set exactly one of openjev_api_key or openjev_existing_secret." : "Set exactly one of api_key or existing_secret."
     }
   }
 }
@@ -105,12 +125,13 @@ resource "snowflake_execute" "ask_json" {
     "RUNTIME_VERSION = '${var.python_version}'",
     "PACKAGES = ('pandas', 'requests')",
     "EXTERNAL_ACCESS_INTEGRATIONS = (${snowflake_external_access_integration.jev.name})",
-    "SECRETS = ('api_key' = ${local.secret_id})",
+    "SECRETS = ('api_key' = ${local.effective_secret_id})",
     "HANDLER = 'ask'",
     "COMMENT = 'Jevflake: sends rows and questions to the Jev API'",
     "AS $$",
     templatefile("${path.module}/handler.py.tftpl", {
-      model            = var.model
+      model            = local.api_model
+      url              = local.api_url
       rows_per_request = var.rows_per_request
       concurrency      = var.concurrency
       max_batch_size   = var.max_batch_size

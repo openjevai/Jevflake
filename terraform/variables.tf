@@ -93,3 +93,33 @@ variable "python_version" {
   type        = string
   default     = "3.11"
 }
+
+variable "provider" {
+  description = "Which Jev gateway to use: typesafe (default) or openjev. TypeSafe stays the default; set openjev to route calls through the OpenJEV community gateway instead."
+  type        = string
+  default     = "typesafe"
+
+  validation {
+    condition     = contains(["typesafe", "openjev"], var.provider)
+    error_message = "provider must be typesafe or openjev."
+  }
+}
+
+variable "openjev_api_key" {
+  description = "OpenJEV API key. Only used when provider is openjev. Terraform creates a Snowflake secret from it, and the key is stored in Terraform state. Leave null and set openjev_existing_secret to keep the key out of state."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "openjev_existing_secret" {
+  description = "Full name (DATABASE.SCHEMA.NAME) of a generic string secret that already holds the OpenJEV API key. Only used when provider is openjev. Set this or openjev_api_key, not both."
+  type        = string
+  default     = null
+}
+
+variable "openjev_secret_name" {
+  description = "Name of the OpenJEV secret Terraform creates when openjev_api_key is set."
+  type        = string
+  default     = "JEV_OPENJEV_API_KEY"
+}

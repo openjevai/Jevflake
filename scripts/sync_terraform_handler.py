@@ -6,7 +6,8 @@ ROOT = Path(__file__).resolve().parent.parent
 SOURCE = ROOT / "macros" / "setup" / "handler.sql"
 TARGET = ROOT / "terraform" / "handler.py.tftpl"
 
-MODEL_EXPRESSION = "{{ tojson(jevflake.model_name()) }}"
+MODEL_EXPRESSION = "{{ tojson(jevflake.api_model()) }}"
+URL_EXPRESSION = "{{ tojson(jevflake.api_url()) }}"
 SETTING_PATTERN = re.compile(r"\{\{ var\('jevflake_([a-z_]+)', \d+\) \| int \}\}")
 
 
@@ -16,6 +17,7 @@ def render(source):
     if "${" in text or "%{" in text:
         raise ValueError("handler.sql contains a sequence Terraform would treat as a template directive")
     text = text.replace(MODEL_EXPRESSION, "${jsonencode(model)}")
+    text = text.replace(URL_EXPRESSION, "${jsonencode(url)}")
     text = SETTING_PATTERN.sub(lambda match: "${" + match.group(1) + "}", text)
     if "{{" in text:
         raise ValueError("unrendered Jinja left in handler.sql")

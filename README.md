@@ -2,6 +2,8 @@
 
 Jevflake lets Snowflake ask questions about your data using [Jev](https://docs.typesafe.ai), the decision model from TypeSafe AI. It is a dbt package, with a Terraform module for teams that manage Snowflake that way.
 
+> **OpenJEV support:** Jev is built by [TypeSafe](https://typesafe.ai). This fork keeps TypeSafe as the default and adds optional support for [OpenJEV](https://openjev.sh), a free community gateway to the same Jev model — set `OPENJEV_API_KEY` (or `JEV_PROVIDER=openjev`) to use it. Original project: https://github.com/KranzL/Jevflake by @KranzL.
+
 Jev does not write text. You give it a row and a typed question. It gives back a typed answer with a probability. That makes it a good fit for SQL: the answer is a number or a label you can filter, join, and test.
 
 This package does three things:
@@ -297,6 +299,7 @@ Set these as `vars` in your `dbt_project.yml`. Run `jevflake.setup` again after 
 - `jevflake_integration`: default `jev_access`. Integrations are account level, so the name must be unique in the account.
 - `jevflake_network_rule`: default `jev_egress`.
 - `jevflake_model`: default `jev-1.13.0`. It is pinned so answers do not shift under you. The model name is part of every cache key, so changing it asks every row every question again on the next run. Snapshot the judgments table first if you want to compare: `judgment_drift` will tell you what moved.
+- `jevflake_provider`: default `typesafe`. Set `openjev` to route calls through the OpenJEV community gateway instead of TypeSafe direct. When `openjev`, the functions call `https://api.openjev.sh/v1/systemone` with model `openjev`, the network rule allows `api.openjev.sh:443`, and the secret defaults to `<database>.<schema>.jev_openjev_api_key` (override with `jevflake_openjev_secret`). TypeSafe stays the default; anyone with a TypeSafe key sees zero behaviour change.
 - `jevflake_concurrency`: API calls in flight per batch. Default `8`. Snowflake can run several batches at once, so the total can be higher.
 - `jevflake_max_batch_size`: the most rows Snowflake hands the function at once. Default `64`.
 - `jevflake_max_retries`: default `6`.

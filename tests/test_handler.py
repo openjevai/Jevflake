@@ -9,7 +9,8 @@ def load_handler():
     path = Path(__file__).resolve().parent.parent / "macros" / "setup" / "handler.sql"
     lines = [line for line in path.read_text().splitlines() if not line.strip().startswith("{%")]
     text = "\n".join(lines)
-    text = text.replace("{{ tojson(jevflake.model_name()) }}", '"jev-test-model"')
+    text = text.replace("{{ tojson(jevflake.api_model()) }}", '"jev-test-model"')
+    text = text.replace("{{ tojson(jevflake.api_url()) }}", '"https://api.typesafe.ai/v1/systemone"')
     text = re.sub(r"\{\{ var\('[^']+', (\d+)\) \| int \}\}", r"\1", text)
     if "{{" in text or "{%" in text:
         raise ValueError("unrendered Jinja left in handler.sql")

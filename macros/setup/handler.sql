@@ -12,14 +12,14 @@ from requests.adapters import HTTPAdapter
 import _snowflake
 from _snowflake import vectorized
 {% endraw %}
-MODEL = {{ tojson(jevflake.model_name()) }}
+MODEL = {{ tojson(jevflake.api_model()) }}
+URL = {{ tojson(jevflake.api_url()) }}
 ROWS_PER_REQUEST = {{ var('jevflake_rows_per_request', 1) | int }}
 CONCURRENCY = {{ var('jevflake_concurrency', 8) | int }}
 MAX_BATCH_SIZE = {{ var('jevflake_max_batch_size', 64) | int }}
 MAX_RETRIES = {{ var('jevflake_max_retries', 6) | int }}
 TIMEOUT_SECONDS = {{ var('jevflake_timeout_seconds', 30) | int }}
 {% raw %}
-URL = "https://api.typesafe.ai/v1/systemone"
 BACKOFF_CAP_SECONDS = 20
 RETRYABLE = (408, 429, 500, 502, 503, 504, 529)
 REJECTED = (400, 413, 422)
